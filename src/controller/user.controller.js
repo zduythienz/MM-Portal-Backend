@@ -40,28 +40,33 @@ exports.authen = async (req, res) => {
   const reqData = req.body;
   console.log(reqData);
 
-  await UserModel.findOne({ "account.username": reqData.username }).then(userInfo => {
+  var userInfo = await UserModel.findOne({
+    "account.username": reqData.username
+  }).then(userInfo => {
     if (userInfo && userInfo.isValidPassword(reqData.password)) {
-      const token = await createToken(userInfo);
-      // createToken(userInfo);
-      // const token = "";
-      console.log(`token is: ${token}`);
-
-      res.json({
-        status: "success",
-        code: 200,
-        message: "Authen pass",
-        data: { token }
-      });
+      return userInfo;
     } else {
       res.status(400).json({ errors: { global: "Invalid account" } });
     }
   });
+
+  const token = await createToken(userInfo);
+
+  console.log(`token is: ${token}`);
+  res.json({
+    status: "success",
+    code: 200,
+    message: "Authen pass",
+    data: { token }
+  });
 };
 
-let createToken = async user => {
+//------------- function for generation Authentication Token
+const createToken = async user => {
   const token = jwt.sign({ sub: user._id }, config.JWT_SECRET);
-
+  console.log("====================================");
+  console.log(`new token: ${token}`);
+  console.log("====================================");
   var result = await UserModel.findOneAndUpdate(
     { _id: user._id },
     {
@@ -70,16 +75,10 @@ let createToken = async user => {
         "authentication.createTime": Date.now()
       }
     },
-    { returnNewDocument: true }
+    { new: true }
   );
 
-  console.log(`result: ${result}`);
+  const returnToken = result.authentication.token;
 
-  return result;
-  // userNewDocument.exec(function(err, newData) {
-  //   if (err) {
-  //     return "";
-  //   }
-  //   return newData.authentication.token;
-  // });
+  return returnToken;
 };

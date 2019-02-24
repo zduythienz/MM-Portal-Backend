@@ -34,6 +34,7 @@ mongoose
     console.log("Could not connect to the database. Exiting now...", err);
     process.exit();
   });
+mongoose.set("useFindAndModify", false);
 let db = mongoose.connection;
 
 app.listen(config.serverport, function() {
