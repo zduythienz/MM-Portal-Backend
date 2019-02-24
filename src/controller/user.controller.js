@@ -16,23 +16,46 @@ exports.checkUsername = (req, res) => {
 };
 
 // Register
-exports.register = (req, res) => {
+exports.register = async (req, res) => {
   const accountInfomartion = req.body;
 
-  UserModel.create(accountInfomartion, function(err, responsive) {
-    if (err) {
-      res
-        .status(400)
-        .json({ errors: { global: "Register fail", message: err } });
-    } else {
-      res.json({
-        status: "success",
-        code: 200,
-        message: "Register successfully",
-        data: responsive
-      });
-    }
-  });
+  // var newUserInfo = await UserModel.create(accountInfomartion, function(
+  //   err,
+  //   responsive
+  // ) {
+  //   if (err) {
+  //     res
+  //       .status(400)
+  //       .json({ errors: { global: "Register fail", message: err } });
+  //   } else {
+  //     return responsive;
+  //   }
+  // });
+  try {
+    var newUserInfo = await UserModel.create(accountInfomartion).then(
+      responsive => {
+        if (responsive._id) {
+          return responsive;
+        } else {
+          res
+            .status(400)
+            .json({ errors: { global: "Register fail", message: responsive } });
+        }
+      }
+    );
+    const token = await createToken(newUserInfo);
+
+    res.json({
+      status: "success",
+      code: 200,
+      message: "Register successfully",
+      data: token
+    });
+  } catch (err) {
+    res
+      .status(400)
+      .json({ errors: { global: "Register fail", message: err.message } });
+  }
 };
 
 // Login
